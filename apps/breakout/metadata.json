@@ -4,7 +4,7 @@
   "icon": "app.png",
   "version":"0.01",
   "description": "Simple breakout game...",
-  "tags": "",
+  "tags": "game",
   "supports": ["BANGLEJS2"],
   "storage": [
     {"name":"breakout.app.js","url":"app.js"},
