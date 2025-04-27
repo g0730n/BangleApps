@@ -5,6 +5,7 @@
   "version":"0.01",
   "description": "A simple breakout game.",
   "readme":"readme.md",
+  "screenshots" : [ { "url":"screenshot.png" } ],
   "tags": "game",
   "supports": ["BANGLEJS2"],
   "storage": [
