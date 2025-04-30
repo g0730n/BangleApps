@@ -1,19 +1,20 @@
 { "id": "cursed",
   "name": "The Cursed Maze",
-  "shortName":"Cursed",
+  "shortName": "Cursed",
   "icon": "app-icon.png",
-  "version":"0.01",
+  "version": "0.01",
   "description": "A roguelike game, done with raycasting.",
-  "readme":"readme.md",
+  "readme": "readme.md",
   "screenshots": [
-    {"url":"screenshot1.png"}, 
-    {"url":"screenshot2.png"}, 
-    {"url":"screenshot3.png"}
+    {"url": "screenshot1.png"}, 
+    {"url": "screenshot2.png"}, 
+    {"url": "screenshot3.png"}
   ],
   "tags": "game",
   "supports": ["BANGLEJS2"],
+  "allow_emulator": true,
   "storage": [
-    {"name":"cursed.app.js","url":"cursed.app.js"},
-    {"name":"cursed.img","url":"app-icon.js","evaluate":true}
+    {"name": "cursed.app.js", "url": "cursed.app.js"},
+    {"name": "cursed.img", "url": "app-icon.js", "evaluate":true}
   ]
 }
