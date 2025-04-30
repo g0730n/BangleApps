@@ -7,7 +7,7 @@ A roguelike game in a psudo 3d raycasted world for the Bangle Js 2.
 - Move Backward:  *Screen Bottom*
 - Turn Left:  *Screen Left*
 - Turn Right:  *Screen Right*
-- Advance Dialoge:  *Anywhere on Screen&*
+- Advance Dialoge:  *Anywhere on Screen*
 
 Other than movement, and clicking through any dialogue, there is no ther user input required.
 
