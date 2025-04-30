@@ -1,11 +1,13 @@
-## The Cursed Maze
+# The Cursed Maze
 A roguelike game in a psudo 3d raycasted world for the Bangle Js 2.
 
-# How to play
-- Move Forward: Tap on screen top
-- Move Backward: Tap on screen bottom
-- Turn Left: Tap on left side of screen
-- Turn Right: Tap on right side of screen
+## How to play
+### Touch Screen Controls ###
+- Move Forward:  *Screen Top*
+- Move Backward:  *Screen Bottom*
+- Turn Left:  *Screen Left*
+- Turn Right:  *Screen Right*
+- Advance Dialoge:  *Anywhere on Screen&*
 
 Other than movement, and clicking through any dialogue, there is no ther user input required.
 
@@ -17,10 +19,14 @@ If you die, the game will automatically close out, and you will have to restart 
 I borrowed the basic raycasting code concept from here, and made some modifications to make it run better on Bangle JS 2. But I would like to give credit where credit is due as working on this project and Henley's code examples was a real help in learning about raycasting.
 https://github.com/AZHenley/raycasting/blob/main/raycast01.js
 
-### Future Updates
-- [ ] More levels
+## Future Updates
+
+### Priority
+- [ ] Optimize / Improve refresh rate
+- [ ] Better monster rendering/collision
+
+### Secondary
+- [ ] Add a level
 - [ ] More monsters
-- [ ] Better monster rendering
-- [ ] Monsters that move around
-- [ ] An NPC
-- [ ] ???
+- [ ] Monsters move positions
+- [ ] Add a NPC
