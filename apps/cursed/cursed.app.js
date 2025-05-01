@@ -95,8 +95,6 @@ var player = {
 //new more compact map array
 const MAPCOLS = 20;
 const MAPROWS = 10;
-//const M = new Uint8Array(MAPCOLS*MAPROWS);
-
 
 const X = 1; //WALL
 const R = 2; //RAT
@@ -286,7 +284,7 @@ function drawSky(timeNow){
     g.fillRect(0,0,SCREENWIDTH,SKYEND);
     clr(CYAN, 1);
   }
-  if(compass && player.dir == S) g.fillCircle(87,16,12);
+  if(compass && player.dir == S) g.fillCircle(87,18,24);
   if(clouds) drawClouds(SKYEND);
 }
 
@@ -298,66 +296,82 @@ function drawGround(timeNow){
   if(grass) drawGrass();
 }
 
-function drawMiniMap(){
-  const MAPLOC = 96;
-  const CELLSIZE = 4;
-  let curX = (0 | player.x);
-  let curY = (0 | player.y);
-  clr(BLACK, 1);
-  g.fillRect(MAPLOC,0,SCREENWIDTH-1,39);
-  clr(WHITE,1);
-  for ( let y = 0; y < MAPROWS; y++){
-    for (let x = 0; x < MAPCOLS; x++){
-      let cellType = readCell(y,x);
-      if(cellType == WALL)
-        clr(WHITE, 1);
-      else if(cellType > WALL && cellType < DOOR)
-        clr(RED, 1);
-      else if(cellType == DOOR)
-        clr(YELLOW, 1);
-      if(cellType || (x == curX && y == curY)){
-        if(x == curX && y == curY)
-          clr(GREEN, 1);
-        g.fillRect(MAPLOC + x*CELLSIZE, y*CELLSIZE, MAPLOC + x*CELLSIZE+CELLSIZE-1, y*CELLSIZE+CELLSIZE-1);
+function drawMiniMap(hasMoved) {
+  var _t = Date.now();
+  if(hasMoved){
+    const MAPXOFFSET = 8;//116;
+    const MAPYOFFSET = 16;
+    const CELLSIZE = 8; //3
+    const curX = player.x | 0;
+    const curY = player.y | 0;
+    clr(BLACK, 1);
+    g.fillRect(MAPXOFFSET, MAPYOFFSET, MAPXOFFSET + CELLSIZE * MAPCOLS - 1, MAPYOFFSET + CELLSIZE * MAPROWS - 1);
+    const colorMap = {
+      WALL: WHITE,
+      DOOR: YELLOW
+    };
+    for (let y = 0; y < MAPROWS; y++) {
+      let yPos = MAPYOFFSET + y * CELLSIZE;
+      for (let x = 0; x < MAPCOLS; x++) {
+        let xPos = MAPXOFFSET + x * CELLSIZE;
+        let cellType = readCell(y, x);
+        if (cellType || (x === curX && y === curY)) {
+          let color = colorMap[cellType] || (cellType > WALL && cellType < DOOR ? RED : WHITE);
+          if (x === curX && y === curY) color = GREEN;
+          clr(color, 1);
+          g.fillRect(xPos, yPos, xPos + CELLSIZE - 1, yPos + CELLSIZE - 1);
+        }
       }
     }
   }
+  print("minimap MS",Date.now()-_t);_t = Date.now();
 }
 
+
 function drawInventory(){
-  let x = 40;
+  let x = SCREENWIDTH - 17;
   for(let i = 0; i < playerItems.length; i++){
     if(playerItems[i]){
-      if(i == 0) g.drawImage(SPRITES[playerItems[i]+10], x, SCREENWIDTH - 18, {scale: 2});
-      else g.drawImage(SPRITES[playerItems[i]+4], x, SCREENWIDTH - 18, {scale: 2});
-      x += 18;
+      if(i == 0) g.drawImage(SPRITES[playerItems[i]+10], x, 0, {scale: 2});
+      else g.drawImage(SPRITES[playerItems[i]+4], x, 0, {scale: 2});
+      x -= 15;
     }
   }
 }
 
 function drawHP(){
+  const NEWHP = (0 | player.hp/2);
+  const XOFF = 16;
+  const HEIGHT = 15;
   clr(RED, 1);
-  g.fillRect(0,0,50,13);
+  g.fillRect(XOFF,2,50+XOFF,HEIGHT);
   clr(GREEN, 1);
-  g.fillRect(0,0,(0 | player.hp/2),13);
+  g.fillRect(XOFF,2,NEWHP+XOFF,HEIGHT);
+}
+
+function drawCompass(pMoved){
+  const DIRS = ['E','S','W','N'];
+  clr(BLACK,1);
+  g.fillRect(0,0,16,16);
+  if(pMoved) clr(WHITE, 1);
+  else clr(RED, 1);
+  if(player.dir == SE) g.drawString(DIRS[1]+DIRS[0],1,3);
+  else if(player.dir == SW) g.drawString(DIRS[1]+DIRS[2],1,3);
+  else if(player.dir == NW) g.drawString(DIRS[3]+DIRS[2],1,3);
+  else if(player.dir == NE) g.drawString(DIRS[3]+DIRS[0],1,3);
+  else g.drawString(DIRS[player.dir/2],1,3);
 }
 
 
 function drawOverlay(pMoved){
-  if(minimap) drawMiniMap();
+  var _t = Date.now();
+  clr(BLACK,1);
+  g.fillRect(0,0,SCREENWIDTH-1,16);
+  drawCompass(pMoved);
   drawHP();
-  if(compass){
-    const DIRS = ['E','S','W','N'];
-    g.fillRect(0,0,15,13);
-    if(pMoved) clr(BLACK, 1);
-    else clr(RED, 1);
-    if(player.dir == SE) g.drawString(DIRS[1]+DIRS[0],0,1);
-    else if(player.dir == SW) g.drawString(DIRS[1]+DIRS[2],0,1);
-    else if(player.dir == NW) g.drawString(DIRS[3]+DIRS[2],0,1);
-    else if(player.dir == NE) g.drawString(DIRS[3]+DIRS[0],0,1);
-    else g.drawString(DIRS[player.dir/2],0,1);
-  }
-  if(inventory) drawInventory();
+  
+  drawInventory();
+  print("Overlay MS",Date.now()-_t);_t = Date.now();
 }
 
 function castRay(rayAngle) {
@@ -395,13 +409,14 @@ function drawWallSlice(i, wallHeight, sliceWidth, tile) {
   if(wallHeight < 20) clr(BLACK, 1);
   else if(wallHeight < 30) clr(BLUE, 1);
   else if(wallHeight < 40) clr(MAGENTA, 1);
-  else clr(RED, 1); 
+  else clr(GREEN, 1); 
   if(tile == 7) clr(YELLOW, 1);
   let yPosition = 0 | (SCREENWIDTH / 2 - wallHeight / 2);
   g.fillRect(i * sliceWidth, yPosition, i* sliceWidth + sliceWidth, yPosition + wallHeight);
 }
 
 function rayCast(){
+  var _t = Date.now();
   const RAYS = SCREENWIDTH / 16;
   const SLICEWIDTH = SCREENWIDTH / RAYS;
   const FOV = Math.PI / 4;
@@ -429,6 +444,7 @@ function rayCast(){
     else ret.s = 0;
     if(ret.s) drawSprite(spriteLoc, spriteDraw, ret.s);
   }
+  print("rayCast MS",Date.now()-_t);_t = Date.now();
 }
 
 function drawEverything(playerHasMoved) {
@@ -634,6 +650,10 @@ function intro(){
   drawEverything(true);
   drawMsgBlock(GAMETITLE,CONTMSG1);
 }
+
+Bangle.on('swipe', function(directionLR, directionUD) {
+  drawMiniMap(true);
+});
 
 Bangle.on('touch', function(button, xy) {
   let touchArea = 0;
