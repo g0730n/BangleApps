@@ -8,6 +8,7 @@ A roguelike game in a psudo 3d raycasted world for the Bangle Js 2.
 - Turn Left:  *Screen Left*
 - Turn Right:  *Screen Right*
 - Advance Dialoge:  *Anywhere on Screen*
+- Show Mini Map: *Swipe UP or DOWN*
 
 Other than movement, and clicking through any dialogue, there is no ther user input required.
 
@@ -23,7 +24,7 @@ https://github.com/AZHenley/raycasting/blob/main/raycast01.js
 
 ### Priority
 - [ ] Optimize / Improve refresh rate
-- [ ] Better monster rendering/collision
+- [x] Better monster rendering/collision
 
 ### Secondary
 - [ ] Add a level
