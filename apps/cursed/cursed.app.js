@@ -14,15 +14,17 @@ const WITCH = 5;
 const DEVIL = 6;
 
 const KEY = 0;
-const KNIFE = 2;
+const KNIFE = 1;
 const DERRINGER = 2;
 const POISON = 3;
 const BOMB = 4;
 const POTION = 5;
 const BLESS = 6;
 const DOOR = 7;
-const ALTER1 = 8;
-const ALTER2 = 9;
+const ALTAR1 = 8;
+const ALTAR2 = 9;
+
+const WALL = 1;
 
 const DAWN = 0;
 const DAY = 1;
@@ -56,41 +58,68 @@ const SPRITES =[
   atob("CAiDAHs3sz+T+QWSyBz+eOGSxwD+QAGSwAS2SA==") //alter 2
 ];
 
-const ENEMY = [
-  ["Rat", 12],
-  ["Blob", 16],
-  ["Orc", 32],
-  ["Witch", 64],
-  ["Devil", 100]
-];
+const CONTMSG1 = "Tap to continue...";
+const GAMETITLE = "The Cursed Maze";
+const MSG_NEED = "You need the";
+const MSG_USE = "You use the ";
+const MSG_PLACE = "You place the ";
+const MSG_BLESS = "blessing";
+const MSG_KEY = "key";
+const MSG_ATTACK = " attacks you!";
+const MSG_ALTAR = "on the altar";
+const MSG_DOOR = "and the door opens!";
+const HITMSG1 = " hit for ";
+const YOUMSG = "You";
+const DIEDMSG = " died";
+const USEMSG1 = " use ";
+const RESTORE = " restores ";
+const HPMSG = " HP";
+const RCVMSG = " received ";
+const LOSTMSG = " lost ";
+const ITEMS = [ "Key", "Knife", "Derringer", "Poison", "Bomb", "Potion", "Blessing" ];
+const DIRS = ['E','S','W','N'];
+
+const ENEMY = ["Rat", "Blob", "Orc", "Witch", "Devil"];
+const ENEMYID = Uint8Array([RAT,BLOB,ORC,WITCH,DEVIL]);
+const ENEMYHP = Uint8Array([12,16,32,64,128]);
 
 var player = {
   x: 2,
   y: 2,
-  angle: 1.5,
+  dir: W,
+  angle: 3.1415,
   hp: 100,
-};
-
-/*
-var map = [
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-  [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 1],
-  [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-  [1, 1, 8, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1],
-  [1, 5, 1, 4, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 7, 1, 1, 1],
-  [1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
-  [1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1],
-  [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 3, 1, 0, 6, 0, 0, 1],
-  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-];
-*/
-
+  score: 0
+}; //1.57 angle
 
 //new more compact map array
 const MAPCOLS = 20;
 const MAPROWS = 10;
-const M = new Uint8Array(MAPCOLS*MAPROWS);
+//const M = new Uint8Array(MAPCOLS*MAPROWS);
+
+
+const X = 1; //WALL
+const R = 2; //RAT
+const Z = 3; //BLOB
+const O = 4; //ORC
+const C = 5; //WITCH
+const B = 6; //DEVIL
+const D = 7; //DOOR
+const A = 8; //ALTAR
+
+
+const M = new Uint8Array([
+X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,
+X,0,0,0,X,0,X,Z,X,0,O,0,0,0,0,0,0,0,O,X,
+X,0,0,0,X,R,X,0,0,0,X,X,X,0,X,0,0,0,0,X,
+X,0,0,0,X,0,0,Z,0,0,0,O,X,O,X,C,0,0,O,X,
+X,0,0,0,X,R,X,0,O,X,X,X,X,X,X,X,X,X,X,X,
+X,X,0,X,X,0,X,X,X,X,Z,0,0,X,0,D,0,0,0,X,
+X,0,0,0,R,0,0,0,X,X,0,X,0,X,R,X,0,0,0,X,
+X,0,0,0,X,0,X,0,X,X,0,X,0,X,0,X,0,0,0,X,
+X,0,A,0,X,O,X,0,0,0,0,X,0,O,0,X,0,B,0,X,
+X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X,X
+]);
 
 //function for reading map cell
 function readCell(r, c){
@@ -102,90 +131,17 @@ function writeCell(v, r, c){
   M[r*MAPCOLS+c] = v;
 }
 
-
-//function for looping through entire map
-function setupMapBorder(){
-  for(let r = 0; r < MAPROWS; r++){
-    let line = "";
-    for(let c = 0; c < MAPCOLS; c++){
-      if(r == 0 || r == MAPROWS -1 || c == 0 || c == MAPCOLS - 1)
-        writeCell(1,r,c);
-    }
+function changeMapSprite(sId, nId, yId, xId){
+  if(readCell(yId,xId) == sId){
+    writeCell(nId, yId, xId);
   }
 }
-
-function goUp(x, y){
-  while(y > 2){
-    writeCell(1, y, x);
-    y--;
-  }
-  return y;
-}
-
-function goDown(x, y){
-  while(y < MAPROWS - 3){
-    writeCell(1, y, x);
-    y++;
-  }
-  return y;
-}
-
-function goRight(x, y){
-  let start = x;
-  while(x < start + 4 && x < MAPCOLS){
-    writeCell(1, y, x);
-    if(x == MAPCOLS - 2){
-      y--;
-      writeCell(6, y, x);
-      writeCell(7, y, x-2);
-      x++;
-    }
-    x++;
-  }
-  return x;
-}
-
-function getRandomTile(){
-  return {
-    x: Math.floor(Math.random() * MAPCOLS) + 1,
-    y: Math.floor(Math.random() * MAPROWS) + 1
-  };
-}
-
-function drawMaze(){
-  let x = 4;
-  let y = 1;
-  y += 2;
-  while(x < MAPCOLS - 1){
-    y = goDown(x, y);
-    x = goRight(x, y);
-    y = goUp(x, y);
-    x = goRight(x, y);
-  }
-  for(let i = 2; i < 9; i++){
-    if(i != 6 && i != 7){
-      let tile = getRandomTile();
-      while(readCell(tile.y, tile.x))
-        tile = getRandomTile();
-      writeCell(i, tile.y, tile.x);
-    }
-  }
-}
-
-setupMapBorder();
-drawMaze();
 
  
 var playerItems = new Uint8Array(7);
 
-var touched = 0;
-var hasMoved = false;
-
-var dirFace;
-var dayTime;
-
 var curEnemy;
-var inBattle = false;
+var enemyHp;
 var battleState = 0;
 var endState = 0;
 var gameWon = false;
@@ -203,126 +159,101 @@ function clr(colorId, pos){
   else g.setBgColor(colors[colorId]);
 }
 
-function drawMiniMap(){
-  let mapLoc = 103;
-  clr(BLACK, 1);
-  g.fillRect(mapLoc,0,SCREENWIDTH,40);
-  clr(WHITE,1);
-  for ( let y = 0; y < MAPROWS; y++){
-    for (let x = 0; x < MAPCOLS; x++){
-      if(Math.floor(player.x) == x && Math.floor(player.y) == y){
-        clr(GREEN, 1);
-        g.fillRect(mapLoc+ x*4,y*4,mapLoc+x*4+4,y*4+4);
-        clr(WHITE, 1);
-      }
-      if(readCell(y,x) == 1) g.fillRect(mapLoc+ x*4,y*4,mapLoc+x*4+4,y*4+4);
-    }
-  }
-}
-
-function castRay(rayAngle) {
-  let x = player.x;
-  let y = player.y;
-  let dx = Math.cos(rayAngle);
-  let dy = Math.sin(rayAngle);
-  let tile = 0;
-  let i = 0;
-  let spriteDistance;
-  while (readCell(Math.floor(y), Math.floor(x)) != 1 && readCell(Math.floor(y), Math.floor(x)) < 7) {
-    x += dx * 0.1;
-    y += dy * 0.1;
-    i++;
-    if (i > 32) break;
-    if(readCell(Math.floor(y), Math.floor(x)) > 1 && !tile){
-      tile = readCell(Math.floor(y), Math.floor(x));
-      spriteDistance = Math.sqrt(Math.pow(x - player.x ,2)+ Math.pow(y - player.y, 2));
-    }
-  }
-  let distance = Math.sqrt(Math.pow(x - player.x ,2)+ Math.pow(y - player.y, 2));
-  let wallHeight = SCREENWIDTH / 2 / distance;
-  if(wallHeight > SCREENWIDTH) wallHeight = SCREENWIDTH;
-  if(!tile) tile = 0;
-  if(!spriteDistance) spriteDistance = distance;
-  return {
-    t: tile,
-    w: wallHeight,
-    s: spriteDistance
-  };
-}
-
-function drawWallSlice(i, wallHeight, sliceWidth, tile) {
-  if(wallHeight < 20) clr(BLACK, 1);
-  else if(wallHeight < 30) clr(BLUE, 1);
-  else if(wallHeight < 40) clr(MAGENTA, 1);
-  else clr(RED, 1); 
-  if(tile == 7) clr(YELLOW, 1); 
-  let yPosition = Math.floor(SCREENWIDTH / 2 - wallHeight / 2);
-  g.fillRect(i * sliceWidth, yPosition, i* sliceWidth + sliceWidth, yPosition + wallHeight);
-}
-
 function drawMsgBlock(msg, msg2){
   const FONTWIDTH = 6;
-  let center = (Math.floor(SCREENWIDTH / 2 - msg.length / 2 * FONTWIDTH)); 
+  let center = (0 | (SCREENWIDTH / 2 - msg.length / 2 * FONTWIDTH)); 
   clr(BLACK, 1);
   g.fillRect(8,48,SCREENWIDTH-8,96);
   clr(WHITE, 1);
-  g.drawString(msg,center, 64);
+  g.drawString(msg,center, 56);
   if(msg2){
-    center = (Math.floor(SCREENWIDTH / 2 - msg2.length / 2 * FONTWIDTH)); 
+    center = (0 | (SCREENWIDTH / 2 - msg2.length / 2 * FONTWIDTH)); 
     g.drawString(msg2,center, 80);
   }
 }
 
-function drawSprite(spriteXpos, spriteId, sDistance){
-  if(spriteId < DOOR || spriteId > DOOR){
-    if(spriteId > DOOR){
-      let newSpriteId;
-      if(!playerItems[BLESS]){
-        if(sDistance == 12) drawMsgBlock("You need the blessing!");
-        newSpriteId = ALTER1;
+function drawSprite(spriteXpos, spriteId, sDistance) {
+  var px = 0 | player.x;
+  var py = 0 | player.y;
+  var playerSprite = readCell(py, px);
+
+  if (spriteId > DOOR) {
+    if (!playerItems[BLESS]) {
+      if (playerSprite === spriteId) {
+        drawMsgBlock(MSG_NEED, MSG_BLESS);
+        Bangle.buzz(100);
       }
-      else{
-        if(sDistance == 12){
-          playerItems[BLESS]--;
-          newSpriteId = ALTER2;
-          drawEverything();
-          drawMsgBlock("You have placed the blessing","on the altar!");
-          for(let y = 0; y < MAPROWS; y++)
-            for(let x = 0; x < MAPCOLS; x++)
-              if(readCell(y,x) == ALTER1) writeCell(ALTER2, y, x);
-          gameWon = true;
-        }
+    } else if (playerSprite === spriteId) {
+      if (spriteId !== ALTAR2) {
+        sDistance = 12;
+        spriteId = ALTAR2;
+        changeMapSprite(ALTAR1, ALTAR2, py, px);
+        playerItems[BLESS] = 0;
+        g.drawImage(SPRITES[ALTAR2 + 4], 48, 100, { scale: 12 });
       }
-      g.drawImage(SPRITES[newSpriteId+4],spriteXpos, 100, {scale: sDistance});
-  }
-    else{
-      g.drawImage(SPRITES[spriteId-2],spriteXpos, 100, {scale: sDistance});
-      if(sDistance == 12){
-        drawMsgBlock("The "+ENEMY[spriteId-2][0]+" attacks you!");
-        inBattle = true;
-        battleState = 1;
-        curEnemy = spriteId;
-      }
+      drawMsgBlock(MSG_PLACE + MSG_BLESS, MSG_ALTAR);
+      gameWon = true;
     }
+    g.drawImage(SPRITES[spriteId + 4], spriteXpos, 100, { scale: sDistance });
+    return;
   }
-  else if(sDistance == 12){
-    if(!playerItems[0]) drawMsgBlock("You need a key!");
-    else{
-      playerItems[0]--;
-      drawEverything();
-      drawMsgBlock("You use the key", "and the door opens!");
-      for(let y = 0; y < MAPROWS; y++)
-        for(let x = 0; x < MAPCOLS; x++)
-          if(readCell(y, x) == DOOR) writeCell(0, y, x);
+
+  if (spriteId < DOOR) {
+    if (playerSprite === spriteId) {
+      if (!battleState) {
+        curEnemy = spriteId - 2;
+        enemyHp = ENEMYHP[curEnemy];
+        drawMsgBlock(ENEMY[curEnemy], MSG_ATTACK);
+        battleState = 1;
+      }
+      g.drawImage(SPRITES[spriteId - 2], 48, 96, { scale: sDistance });
+    } else {
+      g.drawImage(SPRITES[spriteId - 2], spriteXpos, 100, { scale: sDistance });
+    }
+    return;
+  }
+
+  if (sDistance === 12) {
+    if (!playerItems[KEY]) {
+      drawMsgBlock(MSG_NEED, MSG_KEY);
+      Bangle.buzz(100);
+    } else {
+      playerItems[KEY] = 0;
+      for(let dy = py - 1; dy < py + 2; dy++)
+        for(let dx = px -1; dx < px + 2; dx++)
+          if(readCell(dy,dx) == DOOR){
+            changeMapSprite(DOOR, 0, dy, dx);
+            drawEverything();
+            drawMsgBlock(MSG_USE + MSG_KEY, MSG_DOOR);
+            Bangle.buzz(40);
+            return;
+          }
     }
   }
 }
 
-function drawClouds(){
-  for (let row = 0; row < 64; row = row + 16){
-    for (let col = 0; col < SCREENWIDTH; col = col + 16){
-      if(Math.random() < 0.1) g.fillRect(col, row, col+16, row+8);
-    }
+
+function getRand(min, max){
+  return (0 | (Math.random() * max)) + min;
+}
+
+function drawClouds(cloudEnd){
+  const NUMCLOUDS = getRand(1,6);
+  const CLOUDMIN = 8;
+  const CLOUDMAX = 48;
+  let timeDay = getDayTime();
+  let cloudWidth;
+  let cloudHeight;
+  let cloudX;
+  let cloudY;
+  if(timeDay == DAWN || timeDay == DAY) clr(WHITE, 1);
+  else clr(BLUE, 1);
+  for( let i = 0; i < NUMCLOUDS; i++){
+    cloudWidth = getRand(CLOUDMIN, CLOUDMAX);
+    cloudHeight = getRand(CLOUDMIN, CLOUDMIN);
+    cloudX = getRand(1, SCREENWIDTH - cloudWidth);
+    cloudY = getRand(1, cloudEnd - cloudHeight);
+    g.fillRect(cloudX, cloudY, cloudX + cloudWidth, cloudY + cloudHeight);
   }
 }
 
@@ -338,34 +269,59 @@ function drawGrass(){
   }
 }
 
-function drawSky(){
-  if(dayTime == DAY){
-      clr(CYAN, 0);
-      if(compass && dirFace == S){
-        clr(YELLOW, 1);
-        g.fillCircle(88,16,12);
-      }
-      clr(WHITE, 1);
+function drawSky(timeNow){
+  const SKYEND = 80;
+  if(timeNow == DAWN){
+    clr(RED, 1);
+    g.fillRect(0,0,SCREENWIDTH,SKYEND);
+    clr(YELLOW, 1);
   }
-  else if(dayTime == DAWN){
-    clr(RED, 0);
-    clr(WHITE, 1);
+  else if(timeNow == DAY){
+    clr(CYAN, 1);
+    g.fillRect(0,0,SCREENWIDTH,SKYEND);
+    clr(YELLOW, 1);
   }
-  else{
-    clr(BLACK, 0);
-    if(compass && dirFace == S){
-      clr(CYAN, 1);
-      g.fillCircle(88,16,12);
-    }
-    clr(BLUE, 1);
+  else if(timeNow == NIGHT){
+    clr(BLACK, 1);
+    g.fillRect(0,0,SCREENWIDTH,SKYEND);
+    clr(CYAN, 1);
   }
-  if(clouds) drawClouds();
+  if(compass && player.dir == S) g.fillCircle(87,16,12);
+  if(clouds) drawClouds(SKYEND);
 }
 
-function drawGround(){
-  clr(BLACK, 1);
+function drawGround(timeNow){
+  if(timeNow == DAWN || timeNow == NIGHT)
+    clr(BLACK, 1);
+  else clr(WHITE, 1);
   g.fillRect(0,96,SCREENWIDTH,SCREENWIDTH);
   if(grass) drawGrass();
+}
+
+function drawMiniMap(){
+  const MAPLOC = 96;
+  const CELLSIZE = 4;
+  let curX = (0 | player.x);
+  let curY = (0 | player.y);
+  clr(BLACK, 1);
+  g.fillRect(MAPLOC,0,SCREENWIDTH-1,39);
+  clr(WHITE,1);
+  for ( let y = 0; y < MAPROWS; y++){
+    for (let x = 0; x < MAPCOLS; x++){
+      let cellType = readCell(y,x);
+      if(cellType == WALL)
+        clr(WHITE, 1);
+      else if(cellType > WALL && cellType < DOOR)
+        clr(RED, 1);
+      else if(cellType == DOOR)
+        clr(YELLOW, 1);
+      if(cellType || (x == curX && y == curY)){
+        if(x == curX && y == curY)
+          clr(GREEN, 1);
+        g.fillRect(MAPLOC + x*CELLSIZE, y*CELLSIZE, MAPLOC + x*CELLSIZE+CELLSIZE-1, y*CELLSIZE+CELLSIZE-1);
+      }
+    }
+  }
 }
 
 function drawInventory(){
@@ -379,28 +335,74 @@ function drawInventory(){
   }
 }
 
+function drawHP(){
+  clr(RED, 1);
+  g.fillRect(0,0,50,13);
+  clr(GREEN, 1);
+  g.fillRect(0,0,(0 | player.hp/2),13);
+}
 
-function drawOverlay(){
+
+function drawOverlay(pMoved){
   if(minimap) drawMiniMap();
+  drawHP();
   if(compass){
     const DIRS = ['E','S','W','N'];
-    clr(BLACK, 1);
     g.fillRect(0,0,15,13);
-    clr(WHITE, 1);
-    if(dirFace == SE) g.drawString(DIRS[1]+DIRS[0],0,1);
-    else if(dirFace == SW) g.drawString(DIRS[1]+DIRS[2],0,1);
-    else if(dirFace == NW) g.drawString(DIRS[3]+DIRS[2],0,1);
-    else if(dirFace == NE) g.drawString(DIRS[3]+DIRS[0],0,1);
-    else g.drawString(DIRS[dirFace/2],0,1);
+    if(pMoved) clr(BLACK, 1);
+    else clr(RED, 1);
+    if(player.dir == SE) g.drawString(DIRS[1]+DIRS[0],0,1);
+    else if(player.dir == SW) g.drawString(DIRS[1]+DIRS[2],0,1);
+    else if(player.dir == NW) g.drawString(DIRS[3]+DIRS[2],0,1);
+    else if(player.dir == NE) g.drawString(DIRS[3]+DIRS[0],0,1);
+    else g.drawString(DIRS[player.dir/2],0,1);
   }
   if(inventory) drawInventory();
 }
 
-function drawEverything() {
-  g.clear();
-  drawSky();
-  drawGround();
-  const RAYS = 11;
+function castRay(rayAngle) {
+  let x = player.x;
+  let y = player.y;
+  let dx = Math.cos(rayAngle);
+  let dy = Math.sin(rayAngle);
+  let tile = 0;
+  let cell = readCell((0 | y), (0 | x));
+  let i = 0;
+  let spriteDistance;
+  while (cell != WALL && cell < 10 && cell != DOOR) {
+    cell = readCell((0 | y), (0 | x));
+    x += dx * 0.1;
+    y += dy * 0.1;
+    i++;
+    if (i > 48) break;
+    if(!tile && cell > 1){
+      tile = readCell((0 | y), (0 | x));
+      spriteDistance = Math.sqrt(Math.pow(x - player.x ,2)+ Math.pow(y - player.y, 2));
+    }
+  }
+  let distance = Math.sqrt(Math.pow(x - player.x ,2)+ Math.pow(y - player.y, 2));
+
+  let wallHeight = SCREENWIDTH / 2 / distance;
+  if(wallHeight > SCREENWIDTH) wallHeight = SCREENWIDTH - 16;
+  return {
+    t: tile,
+    w: wallHeight,
+    s: spriteDistance
+  };
+}
+
+function drawWallSlice(i, wallHeight, sliceWidth, tile) { 
+  if(wallHeight < 20) clr(BLACK, 1);
+  else if(wallHeight < 30) clr(BLUE, 1);
+  else if(wallHeight < 40) clr(MAGENTA, 1);
+  else clr(RED, 1); 
+  if(tile == 7) clr(YELLOW, 1);
+  let yPosition = 0 | (SCREENWIDTH / 2 - wallHeight / 2);
+  g.fillRect(i * sliceWidth, yPosition, i* sliceWidth + sliceWidth, yPosition + wallHeight);
+}
+
+function rayCast(){
+  const RAYS = SCREENWIDTH / 16;
   const SLICEWIDTH = SCREENWIDTH / RAYS;
   const FOV = Math.PI / 4;
   const ANGLESTEP = FOV / RAYS;
@@ -417,235 +419,230 @@ function drawEverything() {
     }
     drawWallSlice(i,ret.w, SLICEWIDTH, ret.t);
   }
-  
   if(spriteDraw){
-    if(ret.s > 6) ret.s = 1;
-    else if(ret.s > 3) ret.s = 2;
-    else if(ret.s > 1) ret.s = 5;
-    else if(ret.s > 0.8) ret.s = 8;
-    else if(ret.s > 0.0) ret.s = 12;
-    else ret.s = 1;
-    drawSprite(spriteLoc, spriteDraw, ret.s);
+    if(ret.s < 0.6) ret.s = 12;
+    else if(ret.s < 1.1) ret.s = 8;
+    else if(ret.s < 1.5) ret.s = 6;
+    else if(ret.s < 2.1) ret.s = 3;
+    else if(ret.s < 2.6) ret.s = 2;
+    else if(ret.s < 4.4) ret.s = 1;
+    else ret.s = 0;
+    if(ret.s) drawSprite(spriteLoc, spriteDraw, ret.s);
   }
-  drawOverlay();
 }
 
-function wallCollisionCheck() {
-  const floorX = Math.floor(player.x);
-  const floorY = Math.floor(player.y);
-  if (floorX < 0 || floorX >= MAPCOLS || floorY < 0 || floorY >= MAPROWS) return true;
-  return readCell(floorY, floorX) !== 0;
+function drawEverything(playerHasMoved) {
+  if(playerHasMoved || battleState){
+    let timeNow = getDayTime();
+    g.clear();
+    drawSky(timeNow);
+    drawGround(timeNow);
+    rayCast();
+  }
+  drawOverlay(playerHasMoved);
 }
 
-function setDayTime(){
+function getDayTime(){
+  let dayTime;
   let nowTime = Date();
-  curHour = nowTime.getHours();
+  let curHour = nowTime.getHours();
   if((curHour > 5 && curHour < 8) || (curHour > 20 && curHour < 21)) dayTime = DAWN;
   else if(curHour > 7 && curHour < 21) dayTime = DAY;
   else dayTime = NIGHT;
-  
-  if(compass){
-    dirFace = E;
-    if(player.angle > 5.6 && player.angle < 0.6){
-      player.angle = 0.0;
-      dirFace = E;
-    }
-    else if(player.angle > 0.5 && player.angle < 1.3){
-      player.angle = 0.785;
-      dirFace = SE;
-    }
-      else if(player.angle > 1.29 && player.angle < 1.9){
-      dirFace = S;
-      player.angle= 1.57;
-    }
-      else if(player.angle > 1.8 && player.angle < 2.7){
-      dirFace = SW;
-      player.angle = 2.335;
-    }
-      else if(player.angle > 2.6 && player.angle < 3.5){
-      dirFace = W;
-      player.angle = 3.14;
-    }
-      else if(player.angle > 3.6 && player.angle < 4.2){
-      dirFace = NW;
-      player.angle = 3.925;
-    }
-    else if(player.angle > 4.1 && player.angle < 5.1){
-      dirFace = N;
-      player.angle = 4.71;
-    }
-    else if(player.angle > 5.0 && player.angle < 5.7){
-      dirFace = NE;
-      player.angle = 5.495;
-    }
-  }
+  return dayTime;
 }
 
 function doBattle(){
-  const ITEMS = [ "Key", "Knife", "Derringer", "Poison", "Bomb", "Potion", "Blessing" ];
+  var enemyName = ENEMY[curEnemy];
+  var enemyId = ENEMYID[curEnemy];
+  
   if(battleState == 1){
-    let enemyRoll = Math.floor(Math.random()*(curEnemy + ENEMY[curEnemy -2][1] / 10 + 1));
-    drawMsgBlock("The "+ENEMY[curEnemy-2][0]+" hits you for "+enemyRoll+"!");
+    let enemyRoll = getRand(0, (enemyId + enemyHp / 10 + 1));
+    drawMsgBlock(enemyName, HITMSG1 + enemyRoll);
     player.hp -= enemyRoll;
-    if(player.hp < 1) drawMsgBlock("You were killed!");
+    drawHP();
+    if(player.hp < 1) drawMsgBlock(YOUMSG+DIEDMSG,YOUMSG+LOSTMSG);
     battleState++;
   }
   else if(battleState == 2){
     if(player.hp < 1) load();
-    if(playerItems[5] && player.hp < 75){
-      let addHp = playerItems[5] * 5;
-      playerItems[5] = 0;
+    if(playerItems[POTION] && player.hp < 75){
+      let addHp = POTION * BLESS;
+      playerItems[POTION] = 0;
       drawEverything();
-      drawMsgBlock("You drink "+ITEMS[5], " and gain "+addHp+" hp!");
+      drawMsgBlock(ITEMS[POTION] + RESTORE, addHp + HPMSG);
       player.hp += addHp;
     }
     else{
-      if(playerItems[3] && player.hp < 50){
-        let hit = playerItems[3]*5;
-        playerItems[3] = 0;
+      if(playerItems[POISON] && enemyId > BLOB){
+        let hit = POISON * BLESS;
+        playerItems[POISON] = 0;
         drawEverything();
-        drawMsgBlock("You use the "+ITEMS[3], " and hit for "+hit+"!");
-        ENEMY[curEnemy-2][1] -= hit;
+        drawMsgBlock(YOUMSG + USEMSG1 + ITEMS[POISON], YOUMSG + HITMSG1 + hit);
+        enemyHp -= hit;
       }
-      else if(playerItems[4] && player.hp < 50){
-        let hit = playerItems[4]*6;
-        playerItems[4] = 0;
+      else if(playerItems[BOMB] && enemyId > ORC){
+        let hit = BOMB * BLESS;
+        playerItems[BOMB] = 0;
         drawEverything();
-        drawMsgBlock("You use the "+ITEMS[4], "and hit for "+hit+"!");
-        ENEMY[curEnemy-2][1] -= hit;
+        drawMsgBlock(YOUMSG + USEMSG1 + ITEMS[BOMB], YOUMSG + HITMSG1 + hit);
+        enemyHp -= hit;
       }
       else {
-        let weapons = playerItems[1]*2 + playerItems[2]*3;
-        let playerRoll = Math.floor(Math.random() * player.hp / 10) + weapons;
-        ENEMY[curEnemy-2][1] -= playerRoll;
-        drawMsgBlock("You hit for "+playerRoll);
+        let weapons = playerItems[KNIFE] * POISON + playerItems[DERRINGER] * BOMB + playerItems[BLESS] * BLESS;
+        let playerRoll = getRand(weapons, player.hp / 10);
+        enemyHp -= playerRoll;
+        drawMsgBlock(YOUMSG, HITMSG1 + playerRoll);
       }
     }
-    if(ENEMY[curEnemy-2][1] < 1) battleState++; 
+    if(enemyHp < 1) battleState++; 
     else battleState--;
   }
   else if(battleState == 3){
-    drawMsgBlock("You killed the "+ENEMY[curEnemy-2][0]);
-    for(let y = 0; y < MAPROWS; y++)
-      for(let x = 0; x < MAPCOLS; x++)
-        if(readCell(y,x) == curEnemy)
-          writeCell(0,y,x);
+    drawMsgBlock(enemyName, DIEDMSG);
+    player.score += enemyId;
+    changeMapSprite(enemyId, 0, (0 | player.y), (0 | player.x));
     battleState++;
   }
   else if(battleState == 4){
-    let itemRoll = Math.floor(Math.random() * curEnemy + 2);
-    if(curEnemy == WITCH){
-      const KEYMSG = "You got the Key!";
-      let msg2;
-      playerItems[0]++;
+    let itemRoll = getRand(0, enemyId + 2);
+    if(itemRoll > POTION) itemRoll = POTION;
+    if(enemyId == WITCH){
+      let msg;
       if(itemRoll && !playerItems[itemRoll]){
-        if(itemRoll == BLESS) itemRoll--;
-        msg2 = "and a "+ITEMS[itemRoll]+"!";
+        msg2 = YOUMSG + RCVMSG + ITEMS[itemRoll];
         playerItems[itemRoll] = itemRoll;
       }
-      else{
-        msg2 = "and lost your "+ITEMS[itemRoll]+"!";
-        playerItems[itemRoll] --;
+      else {
+        msg = YOUMSG + LOSTMSG + ITEMS[itemRoll];
+        playerItems[itemRoll] = 0;
+        drawEverything();
       }
-      drawEverything();
-      drawMsgBlock(KEYMSG, msg2);
+      playerItems[KEY]++;
+      drawInventory();
+      drawMsgBlock(YOUMSG + RCVMSG + ITEMS[KEY], msg);
     }
-    else if(curEnemy == DEVIL){
-      const bMsg2 = "You received the blessing!";
+    else if(enemyId == DEVIL){
       let msg;
       playerItems[BLESS] = BLESS;
       if(itemRoll && !playerItems[itemRoll]){
-        msg = "and a "+ITEMS[itemRoll]+"!";
+        msg = YOUMSG + RCVMSG + ITEMS[itemRoll];
         playerItems[itemRoll] = itemRoll;
       }
-      drawEverything();
-      drawMsgBlock(bMsg2, msg);
+      drawInventory();
+      drawMsgBlock(YOUMSG + RCVMSG + ITEMS[BLESS], msg);
     }
     else if(itemRoll && !playerItems[itemRoll]){
       playerItems[itemRoll] = itemRoll;
-      drawEverything();
-      drawMsgBlock("You got a "+ITEMS[itemRoll]+"!");
+      drawInventory();
+      drawMsgBlock(YOUMSG + RCVMSG, ITEMS[itemRoll]);
     }
-    battleState++;
-  }
-  else{
-    drawMsgBlock("Tap to continue...");
-    inBattle = false;
+    
+    enemyHp = 0;
     battleState = 0;
     curEnemy = 0;
   }
 }
 
-function handleInput() {
-  if(!inBattle){
-    const speed = 0.5;
-    const angularSpeed = 0.785;
-    const oldX = player.x;
-    const oldY = player.y;
-    hasMoved = true;
-    if (touched == 1) {
-      player.x += Math.cos(player.angle) * speed;
-      player.y += Math.sin(player.angle) * speed;
-    }
-    else if (touched == 2) {
-      player.x -= Math.cos(player.angle) * speed;
-      player.y -= Math.sin(player.angle) * speed;
-    }
-    else if (touched == 3) player.angle -= angularSpeed;
-    else if (touched == 4) player.angle += angularSpeed;
-    if (player.angle < 0) player.angle += 2 * Math.PI;
-    if (player.angle >= 2 * Math.PI) player.angle -= 2 * Math.PI;
-    if (wallCollisionCheck()) {
-      player.x = oldX;
-      player.y = oldY;
-      hasMoved = false;
-    }
+function wallCollisionCheck() {
+  const FLOORX = (0 | player.x);
+  const FLOORY = (0 | player.y);
+  const CELL = readCell(FLOORY, FLOORX);
+  if (FLOORX < 0 || FLOORX >= MAPCOLS || FLOORY < 0 || FLOORY >= MAPROWS) return true;
+  return (CELL == WALL || CELL == DOOR);
+}
+
+function handleInput(pTouch) {
+  let playerMoved = false;
+  const speed = 0.5;
+  const angularSpeed = 0.785375;
+  const oldX = player.x;
+  const oldY = player.y;
+  if (pTouch == 1) {
+    player.x += Math.cos(player.angle) * speed;
+    player.y += Math.sin(player.angle) * speed;
+    playerMoved = true;
   }
-  else{
-    doBattle();
-    hasMoved = false;
+  else if (pTouch == 2) {
+    player.x -= Math.cos(player.angle) * speed;
+    player.y -= Math.sin(player.angle) * speed;
+    playerMoved = true;
   }
-  touched = 0;
+  else if (pTouch == 3){
+    player.angle -= angularSpeed;
+    player.dir--;
+    if(player.dir < 0) player.dir = 7;
+    playerMoved = true;
+  }
+  else if (pTouch == 4){
+    player.angle += angularSpeed;
+    player.dir++;
+    if(player.dir > 7) player.dir = 0;
+    playerMoved = true;
+  }
+  if (player.angle < 0){
+    player.angle += 2 * Math.PI;
+  }
+  if (player.angle >= 2 * Math.PI){
+    player.angle -= 2 * Math.PI;
+  }
+  if (wallCollisionCheck()) {
+    player.x = oldX;
+    player.y = oldY;
+    playerMoved = false;
+  }
+  return playerMoved;
 }
 
 function endGame(){
+  const EMSG10 = "Congratulations on beating";
+  const EMSG20 = "You are a valiant warrior.";
+  const EMSG21 = "Your Score: ";
+  const EMSG30 = "This game was created by:";
+  const EMSG31 = "g0730n";
+  const EMSG40 = "Licensed under the";
+  const EMSG41 = "MIT License";
+  const EMSG50 = "There may be a second";
+  const EMSG51 = "level in the future.";
+  const EMSG60 = "Have a great day!";
+  
+  
   if(endState == 0) drawEverything(); 
-  else if(endState == 1) drawMsgBlock("Congratulations on beating", "THE CURSED MAZE!"); 
-  else if(endState == 2) drawMsgBlock("You are a valiant warrior."); 
-  else if(endState == 3) drawMsgBlock("This game was created by:", "g0730n"); 
-  else if(endState == 4) drawMsgBlock("Licensed under the", "MIT License"); 
-  else if(endState == 5) drawMsgBlock("There may be a second", "level in the future."); 
-  else if(endState == 6) drawMsgBlock("Have a great day!"); 
-  else if(endState == 7) drawMsgBlock("Tap to Exit...");
+  else if(endState == 1) drawMsgBlock(EMSG10, GAMETITLE); 
+  else if(endState == 2) drawMsgBlock(EMSG20, EMSG21+player.score); 
+  else if(endState == 3) drawMsgBlock(EMSG30, EMSG31); 
+  else if(endState == 4) drawMsgBlock(EMSG40, EMSG41); 
+  else if(endState == 5) drawMsgBlock(EMSG50, EMSG51); 
+  else if(endState == 6) drawMsgBlock(EMSG60); 
+  else if(endState == 7) drawMsgBlock(CONTMSG1);
   else load();
   endState++;
 }
 
-function gameMove() {
+function gameMove(touchArea) {
   if(!gameWon){
-    setDayTime();
-    handleInput();
-    if(!inBattle && hasMoved) drawEverything(); 
+    if(battleState) doBattle();
+    else drawEverything(handleInput(touchArea)); 
   }
   else endGame(); 
 }
 
 function intro(){
+  Bangle.setLCDTimeout(0);
   g.setFont6x15();
   g.clear();
-  setDayTime();
-  drawEverything();
-  drawMsgBlock("THE CURSED MAZE","Tap to Play...");
+  drawEverything(true);
+  drawMsgBlock(GAMETITLE,CONTMSG1);
 }
 
-Bangle.setLCDTimeout(0);
-
 Bangle.on('touch', function(button, xy) {
-  if(xy.y < 40) touched = 1;
-  if(xy.y > 136) touched = 2;
-  if(xy.x < 40) touched = 3;
-  if(xy.x > 136) touched = 4;
-  gameMove();
+  let touchArea = 0;
+  if(xy.y < 40) touchArea = 1;
+  else if(xy.y > 136) touchArea = 2;
+  else if(xy.x < 40) touchArea = 3;
+  else if(xy.x > 136) touchArea = 4;
+  else touchArea = 5;
+  gameMove(touchArea);
 });
 
 intro();
