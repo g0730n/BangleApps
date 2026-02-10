@@ -30,13 +30,13 @@ const DAWN = 0;
 const DAY = 1;
 const NIGHT = 2;
 
-const E = 0;
+//const E = 0;
 const SE = 1;
 const S = 2;
 const SW = 3;
 const W = 4;
 const NW = 5;
-const N = 6;
+//const N = 6;
 const NE = 7;
 
 const SCREENWIDTH = 176;
@@ -77,7 +77,7 @@ const HPMSG = " HP";
 const RCVMSG = " received ";
 const LOSTMSG = " lost ";
 const ITEMS = [ "Key", "Knife", "Derringer", "Poison", "Bomb", "Potion", "Blessing" ];
-const DIRS = ['E','S','W','N'];
+//const DIRS = ['E','S','W','N'];
 
 const ENEMY = ["Rat", "Blob", "Orc", "Witch", "Devil"];
 const ENEMYID = Uint8Array([RAT,BLOB,ORC,WITCH,DEVIL]);
@@ -147,9 +147,9 @@ var gameWon = false;
 //Settings
 var clouds = true;
 var grass = true;
-var minimap = true;
+//var minimap = true;
 var compass = true;
-var inventory = true;
+//var inventory = true;
 
 function clr(colorId, pos){
   const colors = new Uint16Array([0x000000,0xFFFFFF,0xFFF000,0x0F0F00,0x0000FF,0x000FFF,0xF0F0FF,0xFFFF00]);
@@ -526,7 +526,7 @@ function doBattle(){
     if(enemyId == WITCH){
       let msg;
       if(itemRoll && !playerItems[itemRoll]){
-        msg2 = YOUMSG + RCVMSG + ITEMS[itemRoll];
+        msg = YOUMSG + RCVMSG + ITEMS[itemRoll];
         playerItems[itemRoll] = itemRoll;
       }
       else {
