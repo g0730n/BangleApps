@@ -4,7 +4,7 @@ const SR = 176; //screen resolution
 const XO = 0; //bricks x offset
 const YO = 24; //bricks y offset
 const BCOL = 6; //brick COLS
-const BROW = 4; //brick ROWS
+//const BROW = 4; //brick ROWS
 const BSPC = 3; //brick spacing
 
 const BT = 24; //total bricks
@@ -290,4 +290,4 @@ Bangle.on('touch', function(button, xy) {
   checkButton(button, xy);
 });
 
-var secondInterval = setInterval(draw, 20);
+setInterval(draw, 20);
