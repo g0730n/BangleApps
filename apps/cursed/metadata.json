@@ -2,7 +2,7 @@
   "name": "The Cursed Maze",
   "shortName": "Cursed",
   "icon": "app-icon.png",
-  "version": "0.01",
+  "version": "0.02",
   "description": "A roguelike game, done with raycasting.",
   "readme": "readme.md",
   "screenshots": [
